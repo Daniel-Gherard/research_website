@@ -1,0 +1,34 @@
+{
+	"rules": {
+		"research":{
+			"users": {
+			".read": true,
+			".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true",
+				"$uid": {
+				".read": true,
+				".write": "auth.uid === $uid"
+				}
+			},
+			"artigos": {
+				".read": true,
+				".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true"
+			},
+			"membros": {
+				".read": true,
+				".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true"
+			},
+			"eventos": {
+				".read": true,
+				".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true"
+			},
+			"projetos": {
+				".read": true,
+				".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true"
+			},
+			"whitelist": {
+				".read": true,
+				".write": "root.child('research').child('whitelist').child(auth.uid).child('admin').val() === true"
+			}
+	  	}
+	}
+}

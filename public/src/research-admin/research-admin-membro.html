@@ -1,0 +1,358 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-time-input/paper-time-input.html">
+<link rel="import" href="../research-icons.html">
+
+<dom-module id="research-admin-membro">
+  <template>
+  <style>
+  :host {
+    display: block;
+
+    padding: 10px 20px;
+  }
+  #membro-container {
+    padding: 30px;
+    max-width: 1024px;
+    margin: 0 auto;
+    background-color: #FAFAFA;
+  }
+  #membro-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #membro-list li {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
+  #membro-list .content {
+    @apply(--layout-flex);
+    color: #000;
+  }
+  #membro-controls {
+    @apply(--layout-horizontal);
+    @apply(--layout-center-justified);
+  }
+  #data,#data_edit {
+    margin: 10px 0;
+  }
+  .dialogsEdit {
+    padding: 20px;
+    height:auto;
+  }
+  </style>
+
+  <div id="membro-container">
+    <firebase-query
+    id="query"
+    path="/research/membros"
+    data="{{membros}}">
+  </firebase-query>
+
+  <h1>Adicionar Membro do Grupo</h1>
+
+  <div id="inputs">
+    <paper-input id="valorNome" label="Nome completo do Membro"></paper-input>
+
+    <paper-input id="valorEmail" label="Email do Membro"></paper-input>
+
+    <paper-input id="valorDescription" label="Descrição do Membro"></paper-input>
+
+    <paper-input id="valorLattes" label="Currículo Lattes do Membro"></paper-input>
+
+    <paper-dropdown-menu id="valorCategoria" label="Categoria do Membro">
+      <paper-listbox slot="dropdown-content" selected="0">
+          <paper-item>Aluno</paper-item>
+          <paper-item>Colaborador</paper-item>
+          <paper-item>Professor</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+    <paper-dropdown-menu id="valorAtivo" label="Ativo?">
+      <paper-listbox slot="dropdown-content" selected="0">
+          <paper-item>Sim</paper-item>
+          <paper-item>Não</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+
+    <paper-input type="file" id="imagem" label="Foto do Membro"></paper-input>
+
+
+
+  </div>
+
+  <div id="membro-controls">
+    <paper-button id="adicionar" on-tap="adicionar" raised>Adicionar</paper-button>
+  </div>
+
+  <h1>Membros do Grupo:</h1>
+  <div id="membro-list">
+    <template is="dom-repeat" items="[[membros]]" as="membro">
+      <li>
+        <p class="content">
+          [[membro.nome]]
+          <paper-icon-button icon="my-icons:edit" note="[[membro]]" on-tap="abrir" index$='[[membro.$key]]'></paper-icon-button>
+          <paper-icon-button icon="my-icons:close" note="[[membro]]" on-tap="remover"></paper-icon-button>
+        </p>
+      </li>
+
+      <paper-dialog class="dialogsEdit" id="dialog" indexDialog$='[[membro.$key]]'>
+        <h2>Editar o membro: [[membro.nome]]</h2>
+        <paper-dialog-scrollable>
+
+          <div id="inputs_edit" indexInput$='inputs_edit-[[membro.$key]]'>
+            <paper-input id="valorNomeEdit" value="[[membro.nome]]" indexInput$='nome-[[membro.$key]]' label="Nome do membro"></paper-input>
+
+            <paper-input id="valorEmailEdit" value="[[membro.email]]" indexInput$='email-[[membro.$key]]' label="Email do membro"></paper-input>
+
+            <paper-input id="valorDescriptionEdit" value="[[membro.description]]" indexInput$='description-[[membro.$key]]' label="Descrição do membro"></paper-input>
+
+            <paper-input id="valorLattesEdit" value="[[membro.lattes]]" indexInput$='lattes-[[membro.$key]]' label="Currículo Lattes do Membro"></paper-input>
+
+            <paper-input id="valorCategoriaEdit" value="[[membro.categoria]]" indexInput$='categoria-[[membro.$key]]' label="Categoria do Membro"></paper-input>
+
+            <paper-dropdown-menu id="valorCategoriaEdit" indexInput$='categoria-[[membro.$key]]' label="Categoria">
+              <paper-listbox slot="dropdown-content" selected="0">
+                <paper-item>Aluno</paper-item>
+                <paper-item>Colaborador</paper-item>
+                <paper-item>Professor</paper-item>
+              </paper-listbox>
+            </paper-dropdown-menu>
+
+            <paper-dropdown-menu id="valorAtivoEdit" indexInput$='ativo-[[membro.$key]]' label="Ativo?">
+              <paper-listbox slot="dropdown-content" selected="0">
+                  <paper-item>Sim</paper-item>
+                  <paper-item>Não</paper-item>
+              </paper-listbox>
+            </paper-dropdown-menu>
+
+            <paper-input type="file" id="imagemEdit" indexInput$='imagem-[[membro.$key]]' label="Imagem do membro"></paper-input>
+        </div>
+
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancelar</paper-button>
+        <paper-button dialog-confirm autofocus note="[[membro]]" indexInput$='atualizar-[[membro.$key]]' on-tap="update">Atualizar</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+  </div>
+
+<paper-toast id="toast" text=""></paper-toast>
+</div>
+</template>
+
+<script>
+class ResearchAdminMembro extends Polymer.Element {
+  static get is() { return 'research-admin-membro'; }
+  static get properties() {
+    return {
+      // This shouldn't be neccessary, but the Analyzer isn't picking up
+      // Polymer.Element#rootPath
+      rootPath: String,
+    };
+  }
+  abrir(e) {
+    var index = e.target.getAttribute("index");
+    Polymer.dom(this.root).querySelector('[indexDialog="'+index+'"]').toggle();
+  }
+  adicionar() {
+    var downloadURL = null;
+
+    try {
+      var nomeValor = this.$.valorNome.value;
+      var emailValor = this.$.valorEmail.value;
+      var descriptionValor = this.$.valorDescription.value;
+      var lattesValor = this.$.valorLattes.value;
+      var categoriaValor = this.$.valorCategoria.value;
+      var ativoValor = this.$.valorAtivo.value;
+      var toast = this.$.toast;
+
+      var reference = this.$.query.ref;
+      var inputs_var = this.$.inputs;
+
+      var imagem = this.$.imagem.inputElement.inputElement.files[0];
+
+      var storageRef = firebase.storage().ref();
+      var membrosRef = storageRef.child('research/membros/' + imagem.name);
+
+      var uploadTask = membrosRef.put(imagem);
+      var botao = this.$.adicionar;
+      botao.disabled = true;
+
+      uploadTask.on('state_changed', function(snapshot) {
+        // Observe state change events such as progress, pause, and resume
+        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Envio está ' + progress + '% completo.');
+      }, function(error) {
+        // Handle unsuccessful uploads
+        console.log(error);
+      }, function() {
+        // Handle successful uploads on complete
+        var downloadURL = uploadTask.snapshot.downloadURL;
+
+        reference.push({
+          nome: nomeValor,
+          email: emailValor,
+          description: descriptionValor,
+          lattes: lattesValor,
+          categoria: categoriaValor,
+          imagem: downloadURL,
+          ativo: ativoValor
+        });
+
+        var inputs = inputs_var.children;
+        for(var i = 0; i < inputs.length; i++) {
+          inputs[i].value = null;
+        }
+
+        toast.text = "Membro adicionado com sucesso.";
+        toast.open();
+
+        botao.disabled = false;
+      });
+    }
+    catch(err) {
+      if (nomeValor == null) {
+        this.$.toast.text = "Você precisa informar um nome para o membro.";
+      } else if (emailValor == null) {
+        this.$.toast.text = "Você precisa informar um Email para o membro.";
+      } else if (descriptionValor == null) {
+        this.$.toast.text = "Você precisa informar uma descrição para o membro.";
+      } else if (lattesValor == null){
+        this.$.toast.text = "Você precisa informar um currículo Lattes para o membro.";
+      } else if (categoriaValor == null){
+        this.$.toast.text = "Você precisa informar uma categoria para o membro.";
+      } else if (downloadURL == null) {
+        this.$.toast.text = "Você precisa selecionar uma imagem para o membro.";
+      } else {
+        this.$.toast.text = "Ocorreu um erro. Tente novamente.";
+      }
+      this.$.toast.open();
+      botao.disabled = false;
+    }
+  }
+  remover(e) {
+    try {
+      var key = e.currentTarget.note.$key;
+      this.$.query.ref.child(key).remove();
+
+      this.$.toast.text = "Membro foi removido.";
+      this.$.toast.open();
+    } catch(err) {
+      this.$.toast.text = "Erro ao remover membro.";
+      this.$.toast.open();
+    }
+  }
+  update(e) {
+    try {
+      var index = e.currentTarget.note.$key;
+      var toast = this.$.toast;
+
+      var atual = Polymer.dom(this.root).querySelector('[indexInput="atualizar-'+index+'"]').note;
+
+      var nomeValor = Polymer.dom(this.root).querySelector('[indexInput="nome-'+index+'"]').value;
+      var descriptionValor = Polymer.dom(this.root).querySelector('[indexInput="description-'+index+'"]').value;
+      var emailValor = Polymer.dom(this.root).querySelector('[indexInput="email-'+index+'"]').value;
+      var lattesValor = Polymer.dom(this.root).querySelector('[indexInput="lattes-'+index+'"]').value;
+      var categoriaValor = Polymer.dom(this.root).querySelector('[indexInput="categoria-'+index+'"]').value;
+      var ativoValor = Polymer.dom(this.root).querySelector('[indexInput="ativo-'+index+'"]').value;
+
+      var imagem = Polymer.dom(this.root).querySelector('[indexInput="imagem-'+index+'"]').inputElement.inputElement.files[0];
+      var reference = this.$.query.ref.child(index);
+
+      if (imagem != null) {
+        var storageRef = firebase.storage().ref();
+        var membrosRef = storageRef.child('research/membros/' + imagem.name);
+
+        var uploadTask = membrosRef.put(imagem);
+
+        uploadTask.on('state_changed', function(snapshot) {
+          // Observe state change events such as progress, pause, and resume
+          var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Envio está ' + progress + '% completo.');
+        }, function(error) {
+          console.log(error);
+        }, function() {
+          // Handle successful uploads on complete
+          var downloadURL = uploadTask.snapshot.downloadURL;
+
+          if (nomeValor == null) {
+            toast.text = "Você precisa informar um nome para o membro.";
+            toast.open();
+          } else if (emailValor == null) {
+            toast.text = "Você precisa informar um email para o membro.";
+            toast.open();
+          } else if (descriptionValor == null) {
+            toast.text = "Você precisa informar uma descrição para o membro.";
+            toast.open();
+          } else if (lattesValor == null) {
+            toast.text = "Você precisa informar uma currículo Lattes para o membro.";
+            toast.open();
+          } else if (categoriaValor == null) {
+            toast.text = "Você precisa informar uma categoria para o membro.";
+            toast.open();
+          } else if (ativoValor == null) {
+            this.$.toast.text = "Você precisa selecionar se o membro está ativo ou não.";
+          } else {
+            reference.update({
+              nome: nomeValor,
+              email: emailValor,
+              description: descriptionValor,
+              lattes: lattesValor,
+              categoria: categoriaValor,
+              imagem: downloadURL,
+              ativo: ativoValor
+            });
+          }
+
+          toast.text = "Membro atualizado com sucesso.";
+          toast.open();
+        });
+      } else {
+        if (nomeValor == null) {
+          toast.text = "Você precisa informar um nome para o membro.";
+          toast.open();
+        } else if (emailValor == null) {
+          toast.text = "Você precisa informar um email para o membro.";
+          toast.open();
+        } else if (descriptionValor == null) {
+          toast.text = "Você precisa informar uma descrição para o membro.";
+          toast.open();
+        } else if (lattesValor == null) {
+          toast.text = "Você precisa informar uma currículo Lattes para o membro.";
+          toast.open();
+        } else if (categoriaValor == null) {
+          toast.text = "Você precisa informar uma categoria para o membro.";
+          toast.open();
+        } else if (ativoValor == null) {
+          this.$.toast.text = "Você precisa selecionar se o membro está ativo ou não.";
+        } else {
+          reference.update({
+            nome: nomeValor,
+            email: emailValor,
+            description: descriptionValor,
+            lattes: lattesValor,
+            categoria: categoriaValor,
+            imagem: downloadURL,
+            ativo: ativoValor
+          });
+        }
+
+        toast.text = "Membro atualizado com sucesso.";
+        toast.open();
+      }
+    } catch(err) {
+      console.log(err);
+      this.$.toast.text = "Erro ao atualizar membro.";
+      this.$.toast.open();
+    }
+  }
+}
+
+window.customElements.define(ResearchAdminMembro.is, ResearchAdminMembro);
+</script>
+</dom-module>

@@ -1,0 +1,189 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-time-input/paper-time-input.html">
+<link rel="import" href="../research-icons.html">
+
+<dom-module id="research-admin-tipos-de-projeto">
+  <template>
+  <style>
+  :host {
+    display: block;
+
+    padding: 10px 20px;
+  }
+  #tipos-projeto-container {
+    padding: 30px;
+    max-width: 1024px;
+    margin: 0 auto;
+    background-color: #FAFAFA;
+  }
+  #tipos-projeto-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #tipos-projeto-list li {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
+  #tipos-projeto-list .content {
+    @apply(--layout-flex);
+    color: #000;
+  }
+  #tipos-projeto-controls {
+    @apply(--layout-horizontal);
+    @apply(--layout-center-justified);
+  }
+  #data,#data_edit {
+    margin: 10px 0;
+  }
+  .dialogsEdit {
+    padding: 20px;
+    height:auto;
+  }
+  </style>
+
+  <div id="tipos-projeto-container">
+    <firebase-query
+    id="query"
+    path="/Research/tipos-projeto"
+    data="{{tipos-projetos}}">
+  </firebase-query>
+
+  <h1>Tipos de projeto:</h1>
+  <div id="tipos-projeto-list">
+    <template is="dom-repeat" items="[[tipos-projetos]]" as="tipo-projeto">
+      <li>
+        <p class="content">
+          [[tipo-projeto.nome]]
+          <paper-icon-button icon="my-icons:edit" note="[[tipo-projeto]]" on-tap="abrir" index$='[[tipo-projeto.$key]]'></paper-icon-button>
+          <paper-icon-button icon="my-icons:close" note="[[tipo-projeto]]" on-tap="remover"></paper-icon-button>
+        </p>
+      </li>
+
+      <paper-dialog class="dialogsEdit" id="dialog" indexDialog$='[[tipo-projeto.$key]]'>
+        <h2>Editar o tipo de projeto: [[tipo-projeto.nome]]</h2>
+        <paper-dialog-scrollable>
+
+          <div id="inputs_edit" indexInput$='inputs_edit-[[tipo-projeto.$key]]'>
+            <paper-input id="valorNomeEdit" value="[[tipo-projeto.nome]]" indexInput$='nome-[[tipo-projeto.$key]]' label="Nome do tipo de projeto"></paper-input>
+        </div>
+
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancelar</paper-button>
+        <paper-button dialog-confirm autofocus note="[[tipo-projeto]]" indexInput$='atualizar-[[tipo-projeto.$key]]' on-tap="update">Atualizar</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+</div>
+
+<h1>Adicionar tipo de projeto:</h1>
+
+<div id="inputs">
+  <paper-input id="valorNome" label="Nome do tipo de projeto"></paper-input>
+</div>
+
+<div id="tipos-projeto-controls">
+  <paper-button id="adicionar" on-tap="adicionar" raised>Adicionar</paper-button>
+</div>
+
+<paper-toast id="toast" text=""></paper-toast>
+</div>
+</template>
+
+<script>
+class ResearchAdminTiposProjeto extends Polymer.Element {
+  static get is() { return 'research-admin-tipos-de-projeto'; }
+  static get properties() {
+    return {
+      // This shouldn't be neccessary, but the Analyzer isn't picking up
+      // Polymer.Element#rootPath
+      rootPath: String,
+    };
+  }
+  _openDialog(ev) {
+    this.$.datepicker.open();
+  };
+  abrir(e) {
+    var index = e.target.getAttribute("index");
+    Polymer.dom(this.root).querySelector('[indexDialog="'+index+'"]').toggle();
+  }
+  adicionar() {
+    try {
+      var nomeValor = this.$.valorNome.value;
+      var toast = this.$.toast;
+
+      var reference = this.$.query.ref;
+      var inputs_var = this.$.inputs;
+      var botao = this.$.adicionar;
+      botao.disabled = true;
+
+      reference.push({
+        nome: nomeValor,
+      });
+
+      var inputs = inputs_var.children;
+      for(var i = 0; i < inputs.length; i++) {
+        inputs[i].value = null;
+      }
+      toast.text = "Tipo de projeto adicionado com sucesso.";
+      toast.open();
+
+      botao.disabled = false;
+    }
+    catch(err) {
+      if (nomeValor == null) {
+        this.$.toast.text = "Você precisa informar um nome.";
+      } else {
+        this.$.toast.text = "Ocorreu um erro. Tente novamente.";
+      }
+      this.$.toast.open();
+      botao.disabled = false;
+    }
+  }
+  remover(e) {
+    try {
+      var key = e.currentTarget.note.$key;
+      this.$.query.ref.child(key).remove();
+
+      this.$.toast.text = "O tipo de projeto foi removido.";
+      this.$.toast.open();
+    } catch(err) {
+      this.$.toast.text = "Erro ao remover tipo de projeto.";
+      this.$.toast.open();
+    }
+  }
+  update(e) {
+    try {
+      var index = e.currentTarget.note.$key;
+      var toast = this.$.toast;
+
+      var atual = Polymer.dom(this.root).querySelector('[indexInput="atualizar-'+index+'"]').note;
+
+      var nomeValor = Polymer.dom(this.root).querySelector('[indexInput="nome-'+index+'"]').value;
+
+      var reference = this.$.query.ref.child(index);
+
+      if (nomeValor == null) {
+        toast.text = "Você precisa informar um nome para o tipo de projeto.";
+        toast.open();
+      } else {
+        reference.update({
+          nome: nomeValor
+        });
+      }
+      toast.text = "Tipo de projeto atualizado com sucesso.";
+      toast.open();
+    } catch(err) {
+      console.log(err);
+      this.$.toast.text = "Erro ao atualizar o tipo de projeto.";
+      this.$.toast.open();
+    }
+  }
+}
+
+window.customElements.define(ResearchAdminTiposProjeto.is, ResearchAdminTiposProjeto);
+</script>
+</dom-module>

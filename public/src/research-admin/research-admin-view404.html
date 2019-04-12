@@ -1,0 +1,43 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="research-admin-view404">
+  <template>
+    <style>
+      :host {
+        display: block;
+
+        padding: 10px 20px;
+      }
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FFF;
+      }
+    </style>
+
+    <div class="overlay">
+      <paper-spinner active></paper-spinner>
+    </div>
+
+  </template>
+  <script>
+    class ResearchAdminView404 extends Polymer.Element {
+      static get is() { return 'research-admin-view404'; }
+      static get properties() {
+        return {
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+        };
+      }
+    }
+
+    window.customElements.define(ResearchAdminView404.is, ResearchAdminView404);
+  </script>
+</dom-module>

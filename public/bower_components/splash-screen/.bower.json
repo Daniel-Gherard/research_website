@@ -1,0 +1,40 @@
+{
+  "name": "splash-screen",
+  "description": "Splash Screen element for Polymer v2 ",
+  "main": "splash-screen.html",
+  "authors": [
+    "Arcoiris Labs"
+  ],
+  "version": "1.0.0",
+  "license": "Apache Licence 2.0",
+  "keywords": [
+    "splash",
+    "web-component",
+    "web-components",
+    "splash-screen",
+    "polymer2",
+    "polymer es6"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0"
+  },
+  "devDependencies": {
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
+    "web-component-tester": "Polymer/web-component-tester#^6.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0"
+  },
+  "resolutions": {
+    "polymer": "^2.0.0"
+  },
+  "homepage": "https://github.com/arcoirislabs/polymer2-splashscreen",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.0.0",
+    "commit": "b34b6bca98417efe2661e5a6afd48c64654d52a6"
+  },
+  "_source": "https://github.com/arcoirislabs/polymer2-splashscreen.git",
+  "_target": "^1.0.0",
+  "_originalSource": "arcoirislabs/polymer2-splashscreen",
+  "_direct": true
+}

@@ -1,0 +1,22 @@
+{
+  "name": "research-project",
+  "version": "0.0.1",
+  "description": "Site para Grupos de Pesquisa",
+  "scripts": {
+    "build": "gulp"
+  },
+  "engines": {
+    "node": ">=4.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "css-slam": "^1.2.1",
+    "del": "^3.0.0",
+    "gulp": "gulpjs/gulp#latest",
+    "html-minifier": "^3.5.3",
+    "merge-stream": "^1.0.1",
+    "plylog": "^0.5.0",
+    "polymer-build": "^2.0.0",
+    "uglify": "^0.1.5"
+  }
+}

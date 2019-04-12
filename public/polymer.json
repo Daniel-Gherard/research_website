@@ -1,0 +1,29 @@
+{
+  "entrypoint": "index.html",
+  "fragments": [
+  ],
+  "sources": [
+   "src/**/*",
+   "imagens/**/*",
+   "bower.json"
+  ],
+  "extraDependencies": [
+    "manifest.json",
+    "bower_components/webcomponentsjs/webcomponents-lite.js"
+  ],
+  "lint": {
+    "rules": ["polymer-2-hybrid"]
+  },
+  "build": [{
+    "name": "bundled-custom",
+    "bundle": {
+      "excludes": ["/path/to/stuff/", "/path/to/more/stuff.html"],
+      "stripComments": "true",
+      "inlineCss": "false",
+      "sourcemaps": "true"
+    },
+    "js": {"minify": true},
+    "css": {"minify": true},
+    "html": {"minify": true}
+  }]
+}

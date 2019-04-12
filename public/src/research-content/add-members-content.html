@@ -1,0 +1,118 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="add-members-content">
+  <template>
+      <style>
+      :host {
+        display: block;
+
+        padding: 10px 20px;
+      }
+      #inscription-container {
+        padding: 30px;
+        margin: 0 auto;
+        width: auto;
+        background-color: #FAFAFA;
+      }
+      #inscription_list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #inscription_list li {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+      #inscription_list .content {
+        @apply(--layout-flex);
+        color: #000;
+        max-width: 100%;
+        overflow: hidden;
+        word-break: break-all;
+      }
+      .v-table-cell-content .v-table-cell-break-word{
+        word-wrap: break-word;
+      }
+      </style>
+
+      <div id="inscription-container">
+        <h1>Membros do Grupo:</h1>
+        <div id="inscription_list">
+          <firebase-query
+            id="query"
+            path="/research/membros"
+            order-by-child="nome"
+            data="{{membros}}">
+          </firebase-query>
+
+          <firebase-auth
+          	id="auth"
+          	user="{{user}}">
+          </firebase-auth>
+
+          <vaadin-grid id="grid" active-item="{{activeItem}}" items="[[membros]]" as="[[valor]]">
+              <vaadin-grid-column flex-grow="0">
+                <template>
+                  <paper-checkbox aria-label="Selecionar" on-change="_selectItem">
+                  </paper-checkbox>
+                </template>
+              </vaadin-grid-column>
+
+              <vaadin-grid-column flex-grow="2">
+                <template class="header">Nome</template>
+                <template style="overflow: auto;">
+                  <div style="overflow: auto;">
+                    [[item.nome]]
+                  </div>
+                </template>
+              </vaadin-grid-column>
+          </vaadin-grid>
+        </div>
+      </div>
+
+      <paper-toast id="toast" text=""></paper-toast>
+  </template>
+
+  <script>
+    class AddMembersContent extends Polymer.Element {
+      static get is() { return 'add-members-content'; }
+      static get properties() {
+        return {
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+          activeItem: {
+            type: Array,
+            notify: true
+          }
+        };
+      }
+
+
+      abrir(e) {
+        var dialog = this.$.dialog;
+        dialog.toggle();
+      }
+
+      static get observers() {
+        return [
+          'informationsChanged(informations.splices)'
+        ];
+      }
+
+      // iOS needs indeterminated + checked at the same time
+      _isChecked(inverted, indeterminate) {
+        return indeterminate || inverted;
+      }
+      _isSelected(inverted, selected) {
+        return inverted != selected;
+      }
+    }
+
+    window.customElements.define(AddMembersContent.is, AddMembersContent);
+  </script>
+</dom-module>

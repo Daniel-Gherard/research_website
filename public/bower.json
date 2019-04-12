@@ -1,0 +1,47 @@
+{
+  "name": "public",
+  "description": "Semana da Computação na UFSJ.",
+  "main": "index.html",
+  "authors": [
+    "Daniel Alencar"
+  ],
+  "license": "https://polymer.github.io/LICENSE.txt",
+  "dependencies": {
+    "app-layout": "PolymerElements/app-layout#latest",
+    "app-route": "PolymerElements/app-route#latest",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#latest",
+    "iron-iconset-svg": "PolymerElements/iron-iconset-svg#latest",
+    "iron-media-query": "PolymerElements/iron-media-query#latest",
+    "iron-pages": "PolymerElements/iron-pages#latest",
+    "iron-selector": "PolymerElements/iron-selector#^2.0.0",
+    "paper-icon-button": "PolymerElements/paper-icon-button#latest",
+    "paper-button": "PolymerElements/paper-button#latest",
+    "paper-spinner": "PolymerElements/paper-spinner#latest",
+    "polymer": "Polymer/polymer#latest",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#latest",
+    "polymerfire": "latest",
+    "paper-input": "latest",
+    "iron-image": "latest",
+    "app-datepicker": "latest",
+    "web-animations-js": "latest",
+    "paper-time-input": "ryanburns23/paper-time-input#latest",
+    "paper-toast": "PolymerElements/paper-toast#latest",
+    "paper-dialog": "PolymerElements/paper-dialog#latest",
+    "paper-progress": "^2.0.1",
+    "paper-avatar": "NeilujD/paper-avatar#^2.0.1",
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^2.0.0",
+    "vaadin-grid": "vaadin/vaadin-grid#^3.0.0",
+    "paper-checkbox": "^2.0.1",
+    "iron-ajax": "^2.0.5",
+    "splash-screen": "arcoirislabs/polymer2-splashscreen#^1.0.0",
+    "vaadin-upload": "^2.1.0",
+    "l2t-paper-slider": "2.0.4"
+  },
+  "resolutions": {
+    "polymer": "latest"
+  },
+  "devDependencies": {
+    "web-component-tester": "Polymer/web-component-tester#latest"
+  },
+  "private": true
+}

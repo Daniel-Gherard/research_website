@@ -1,0 +1,316 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-time-input/paper-time-input.html">
+<link rel="import" href="../../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../research-icons.html">
+
+<link rel="import" href="../research-content/add-members-content.html">
+
+<dom-module id="research-admin-projeto">
+  <template>
+  <style>
+  :host {
+    display: block;
+
+    padding: 10px 20px;
+  }
+  #projetos-container {
+    padding: 30px;
+    max-width: 1024px;
+    margin: 0 auto;
+    background-color: #FAFAFA;
+  }
+  #projetos-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #projetos-list li {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
+  #projetos-list .content {
+    @apply(--layout-flex);
+    color: #000;
+  }
+  #projetos-controls {
+    @apply(--layout-horizontal);
+    @apply(--layout-center-justified);
+  }
+  .dialogsEdit {
+    padding: 20px;
+    height:auto;
+  }
+  #inscription-container {
+    padding: 30px;
+    margin: 0 auto;
+    width: auto;
+    background-color: #FAFAFA;
+  }
+  #inscription_list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #inscription_list li {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
+  #inscription_list .content {
+    @apply(--layout-flex);
+    color: #000;
+    max-width: 100%;
+    overflow: hidden;
+    word-break: break-all;
+  }
+  .v-table-cell-content .v-table-cell-break-word{
+    word-wrap: break-word;
+  }
+  </style>
+
+  <div id="projetos-container">
+    <firebase-query
+    id="query"
+    path="/research/projetos"
+    data="{{projetos}}">
+  </firebase-query>
+
+  <firebase-query
+  id="queryMembros"
+  path="/research/membros"
+  data="{{membros}}">
+  </firebase-query>
+
+  <firebase-query
+  id="queryArtigos"
+  path="/research/artigos"
+  data="{{artigos}}">
+  </firebase-query>
+
+  <firebase-query
+  id="queryTipoProjetos"
+  path="/research/tipos-projeto"
+  data="{{tipos-projetos}}">
+  </firebase-query>
+
+<h1>Adicionar Projeto:</h1>
+
+  <div id="inputs">
+    <paper-input id="valorNome" label="Nome do Projeto"></paper-input>
+
+    <paper-input id="valorDescription" label="Descrição do Projeto"></paper-input>
+
+    <paper-input type="file" id="logo" label="Logo do Projeto"></paper-input>
+
+    <div id="inscription-container">
+      <h1>Membros do Grupo:</h1>
+      <div id="inscription_list">
+        <vaadin-grid id="grid" active-item="{{activeItem}}" items="[[membros]]" as="[[valor]]">
+            <vaadin-grid-column flex-grow="0">
+              <template>
+                <paper-checkbox aria-label="Selecionar" on-change="_selectItem">
+                </paper-checkbox>
+              </template>
+            </vaadin-grid-column>
+
+            <vaadin-grid-column flex-grow="2">
+              <template class="header">Nome</template>
+              <template style="overflow: auto;">
+                <div style="overflow: auto;">
+                  [[item.nome]]
+                </div>
+              </template>
+            </vaadin-grid-column>
+        </vaadin-grid>
+    </div>
+  </div>
+
+  <div id="projetos-controls">
+    <paper-button id="adicionar" on-tap="adicionar" raised>Adicionar</paper-button>
+  </div>
+
+  <h1>Projetos:</h1>
+  <div id="projetos-list">
+    <template is="dom-repeat" items="[[projetos]]" as="projeto">
+      <li>
+        <p class="content">
+          [[projeto.nome]]
+          <paper-icon-button icon="my-icons:edit" note="[[projeto]]" on-tap="abrir" index$='[[projeto.$key]]'></paper-icon-button>
+          <paper-icon-button icon="my-icons:close" note="[[projeto]]" on-tap="remover"></paper-icon-button>
+        </p>
+      </li>
+
+      <paper-dialog class="dialogsEdit" id="dialog" indexDialog$='[[projeto.$key]]'>
+        <h2>Editar Projeto: [[projeto.nome]]</h2>
+        <paper-dialog-scrollable>
+
+          <div id="inputs_edit" indexInput$='inputs_edit-[[projeto.$key]]'>
+              <paper-input id="valorNomeEdit" value="[[projeto.nome]]" indexInput$='nome-[[projeto.$key]]' label="Nome do projeto"></paper-input>
+
+              <paper-input id="valorDescriptionEdit" value="[[projeto.description]]" indexInput$='description-[[projeto.$key]]' label="Descrição do projeto"></paper-input>
+          </div>
+
+        </paper-dialog-scrollable>
+        <div class="buttons">
+          <paper-button dialog-dismiss>Cancelar</paper-button>
+          <paper-button dialog-confirm autofocus note="[[projeto]]" indexInput$='atualizar-[[projeto.$key]]' on-tap="update">Atualizar</paper-button>
+        </div>
+      </paper-dialog>
+    </template>
+  </div>
+
+  <paper-toast id="toast" text=""></paper-toast>
+</div>
+</template>
+
+<script>
+class ResearchAdminProjeto extends Polymer.Element {
+  static get is() { return 'research-admin-projeto'; }
+  static get properties() {
+    return {
+      // This shouldn't be neccessary, but the Analyzer isn't picking up
+      // Polymer.Element#rootPath
+      rootPath: String,
+      membersSelected: Array
+    };
+  }
+  abrir(e) {
+    var index = e.target.getAttribute("index");
+    Polymer.dom(this.root).querySelector('[indexDialog="'+index+'"]').toggle();
+  }
+  _selectItem(e) {
+    if (!e.target.checked) {
+      this.$.grid.deselectItem(e.model.item);
+    } else {
+      this.$.grid.selectItem(e.model.item);
+    }
+    this.indeterminate = this.$.grid.selectedItems.length > 0;
+  }
+  toObject(arr) {
+    var rv = {};
+    for (var i = 0; i < arr.length; ++i)
+      rv[i] = arr[i];
+    return rv;
+  }
+  adicionar() {
+    var downloadURL = null;
+    var botao = this.$.adicionar;
+
+    try {
+      // Lista de Membros:
+      var grid = this.$.grid;
+      var itens = grid.selectedItems;
+      var str = this.toObject(itens);
+
+      var nomeValor = this.$.valorNome.value;
+      var descriptionValor = this.$.valorDescription.value;
+      var toast = this.$.toast;
+
+      var reference = this.$.query.ref;
+      var inputs_var = this.$.inputs;      
+
+      var logo = this.$.logo.inputElement.inputElement.files[0];
+
+      var storageRef = firebase.storage().ref();
+      var projetosRef = storageRef.child('research/projetos/logo' + logo.name);
+
+      var uploadTask = projetosRef.put(logo);
+      botao.disabled = true;
+
+      uploadTask.on('state_changed', function(snapshot) {
+        // Observe state change events such as progress, pause, and resume
+        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Envio está ' + progress + '% completo.');
+      }, function(error) {
+        // Handle unsuccessful uploads
+        console.log(error);
+      }, function() {
+        // Handle successful uploads on complete
+        var downloadURL = uploadTask.snapshot.downloadURL;
+
+        var save = reference.push({
+          nome: nomeValor,
+          description: descriptionValor,
+          logo: downloadURL,
+          members: str
+        });
+
+        var inputs = inputs_var.children;
+        for(var i = 0; i < inputs.length; i++) {
+          inputs[i].value = null;
+        }
+        toast.text = "Projeto adicionado com sucesso.";
+        toast.open();
+
+        botao.disabled = false;
+      });
+    }
+    catch(err) {
+      console.log(err);
+
+      if (nomeValor == null) {
+        this.$.toast.text = "Você precisa informar um nome.";
+      } else {
+        this.$.toast.text = "Ocorreu um erro. Tente novamente.";
+      }
+      this.$.toast.open();
+      botao.disabled = false;
+    }
+  }
+  remover(e) {
+    try {
+      var key = e.currentTarget.note.$key;
+      this.$.query.ref.child(key).remove();
+
+      this.$.toast.text = "O projeto foi removido.";
+      this.$.toast.open();
+    } catch(err) {
+      this.$.toast.text = "Erro ao remover projeto.";
+      this.$.toast.open();
+    }
+  }
+  update(e) {
+    try {
+      var index = e.currentTarget.note.$key;
+      var toast = this.$.toast;
+
+      var atual = Polymer.dom(this.root).querySelector('[indexInput="atualizar-'+index+'"]').note;
+
+      var nomeValor = Polymer.dom(this.root).querySelector('[indexInput="nome-'+index+'"]').value;
+      var descriptionValor = Polymer.dom(this.root).querySelector('[indexInput="description-'+index+'"]').value;
+
+      var reference = this.$.query.ref.child(index);
+
+      if (nomeValor == null) {
+        toast.text = "Você precisa informar um nome para o projeto.";
+        toast.open();
+      } else if (descriptionValor == null) {
+        toast.text = "Você precisa informar uma descrição para o projeto.";
+        toast.open();    
+      } else {
+        reference.update({
+          nome: nomeValor,
+          description: descriptionValor
+        });
+      }
+      toast.text = "Projeto atualizado com sucesso.";
+      toast.open();
+    } catch(err) {
+      console.log(err);
+      this.$.toast.text = "Erro ao atualizar o projeto.";
+      this.$.toast.open();
+    }
+  }
+  // iOS needs indeterminated + checked at the same time
+  _isChecked(inverted, indeterminate) {
+    return indeterminate || inverted;
+  }
+  _isSelected(inverted, selected) {
+    return inverted != selected;
+  }
+}
+
+window.customElements.define(ResearchAdminProjeto.is, ResearchAdminProjeto);
+</script>
+</dom-module>

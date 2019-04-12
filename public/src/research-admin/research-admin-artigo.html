@@ -1,0 +1,333 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/app-datepicker/app-datepicker-dialog.html">
+<link rel="import" href="../../bower_components/paper-time-input/paper-time-input.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/vaadin-grid/vaadin-grid.html">
+<link rel="import" href="../research-icons.html">
+
+<dom-module id="research-admin-artigo">
+  <template>
+  <style>
+  :host {
+    display: block;
+    padding: 10px 20px;
+  }
+  #artigo-container {
+    padding: 30px;
+    max-width: 1024px;
+    margin: 0 auto;
+    background-color: #FAFAFA;
+  }
+  #artigo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #artigo-list li {
+    @apply(--layout-horizontal);
+    @apply(--layout-center);
+  }
+  #artigo-list .content {
+    @apply(--layout-flex);
+    color: #000;
+  }
+  #artigo-controls {
+    @apply(--layout-horizontal);
+    @apply(--layout-center-justified);
+  }
+  #data,#data_edit {
+    margin: 10px 0;
+  }
+  .dialogsEdit {
+    padding: 20px;
+  }
+  </style>
+
+  <div id="artigo-container">
+      <firebase-query
+      id="query"
+      path="/research/artigos"
+      data="{{artigos}}">
+      </firebase-query>
+
+      <firebase-query
+      id="queryMembros"
+      path="/research/membros"
+      data="{{membros}}">
+      </firebase-query>
+
+      <firebase-query
+      id="queryEventos"
+      path="/research/eventos"
+      data="{{eventos}}">
+      </firebase-query>
+
+    <h1>Adicionar Artigo:</h1>
+
+    <div id="inputs">
+      <paper-input id="valorNome" label="Nome do Artigo"></paper-input>
+
+      <paper-dropdown-menu id="valorEvento" label="Evento">
+        <paper-listbox slot="dropdown-content">
+          <template is="dom-repeat" items="[[eventos]]" as="evento">
+            <paper-item value="[[evento]]">[[evento.nome]]</paper-item>
+          </template>
+        </paper-listbox>
+      </paper-dropdown-menu>
+
+      <div id="inscription-container">
+        <h1>Membros do Grupo:</h1>
+        <div id="inscription_list">
+          <vaadin-grid id="grid" active-item="{{activeItem}}" items="[[membros]]" as="[[valor]]">
+              <vaadin-grid-column flex-grow="0">
+                <template>
+                  <paper-checkbox aria-label="Selecionar" on-change="_selectItem">
+                  </paper-checkbox>
+                </template>
+              </vaadin-grid-column>
+              <vaadin-grid-column flex-grow="2">
+                <template class="header">Nome</template>
+                <template style="overflow: auto;">
+                  <div style="overflow: auto;">
+                    [[item.nome]]
+                  </div>
+                </template>
+              </vaadin-grid-column>
+          </vaadin-grid>
+        </div>
+      </div>
+
+      <paper-input type="file" id="artigo" label="PDF do Artigo"></paper-input>
+
+    </div>
+
+    <div id="artigo-controls">
+      <paper-button id="adicionar" on-tap="adicionar" raised>Adicionar</paper-button>
+    </div>
+  
+    <h1>Artigos Cadastrados:</h1>
+    <div id="artigo-list">
+      <template is="dom-repeat" items="[[artigos]]" as="artigo">
+        <li>
+          <p class="content">
+            [[artigo.nome]]
+            <paper-icon-button icon="my-icons:edit" note="[[artigo]]" on-tap="abrir" index$='[[artigo.$key]]'></paper-icon-button>
+            <paper-icon-button icon="my-icons:close" note="[[artigo]]" on-tap="remover"></paper-icon-button>
+          </p>
+        </li>
+
+        <paper-dialog class="dialogsEdit" id="dialog" indexDialog$='[[artigo.$key]]'>
+          <h2>Editar artigo: [[artigo.nome]]</h2>
+          <paper-dialog-scrollable>
+
+            <div id="inputs_edit" indexInput$='inputs_edit-[[artigo.$key]]'>
+              <paper-input id="valorNomeEdit" value="[[artigo.nome]]" indexInput$='nome-[[artigo.$key]]' label="Nome do artigo"></paper-input>
+
+              <paper-dropdown-menu id="valorEventoEdit" indexInput$='evento-[[artigo.$key]]' label="Evento">
+                <paper-listbox slot="dropdown-content">
+                  <template is="dom-repeat" items="[[eventos]]" as="evento">
+                    <paper-item value="[[evento]]">[[evento.nome]]</paper-item>
+                  </template>
+                </paper-listbox>
+              </paper-dropdown-menu>
+
+              <paper-input type="file" id="artigoEdit" indexInput$='artigo-[[artigo.$key]]' label="PDF do artigo"></paper-input>
+
+
+          </div>
+
+          </paper-dialog-scrollable>
+          <div class="buttons">
+            <paper-button dialog-dismiss>Cancelar</paper-button>
+            <paper-button dialog-confirm autofocus note="[[artigo]]" indexInput$='atualizar-[[artigo.$key]]' on-tap="update">Atualizar</paper-button>
+          </div>
+        </paper-dialog>
+      </template>
+    </div>
+
+    <paper-toast id="toast" text=""></paper-toast>
+  </div>
+</template>
+
+  <script>
+    class ResearchAdminArtigo extends Polymer.Element {
+      static get is() { return 'research-admin-artigo'; }
+      static get properties() {
+        return {
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+        };
+      }
+      abrir(e) {
+        var index = e.target.getAttribute("index");
+        Polymer.dom(this.root).querySelector('[indexDialog="'+index+'"]').toggle();
+      }
+      adicionar() {
+        var downloadURL = null;
+
+        try {
+          var nomeValor = this.$.valorNome.value;
+          var eventoValor = this.$.valorEvento.value;
+          var membroValor = this.$.valorMembro.value;
+          var participantesValor = this.$.valorParticipantes.value;
+          var toast = this.$.toast;
+
+          var reference = this.$.query.ref;
+          var inputs_var = this.$.inputs;
+
+          var artigo = this.$.artigo.inputElement.inputElement.files[0];
+
+          var storageRef = firebase.storage().ref();
+          var artigosRef = storageRef.child('research/artigos/' + artigo.name);
+
+          var uploadTask = artigosRef.put(artigo);
+          var botao = this.$.adicionar;
+          botao.disabled = true;
+
+          uploadTask.on('state_changed', function(snapshot) {
+            // Observe state change events such as progress, pause, and resume
+            var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Envio está ' + progress + '% completo.');
+          }, function(error) {
+            // Handle unsuccessful uploads
+            console.log(error);
+          }, function() {
+            // Handle successful uploads on complete
+            var downloadURL = uploadTask.snapshot.downloadURL;
+
+            reference.push({
+              nome: nomeValor,
+              evento: eventoValor,
+              membro: membroValor,
+              participantes: participantesValor,
+              artigo: downloadURL
+            });
+
+            var inputs = inputs_var.children;
+            for(var i = 0; i < inputs.length; i++) {
+              inputs[i].value = null;
+            }
+
+            toast.text = "Artigo adicionado com sucesso.";
+            toast.open();
+
+            botao.disabled = false;
+          });
+        }
+        catch(err) {
+          if (nomeValor == null) {
+            this.$.toast.text = "Você precisa informar um nome para o artigo.";
+          } else if (eventoValor == null) {
+            this.$.toast.text = "Você precisa selecionar um evento.";
+          } else if (membroValor == null) {
+            this.$.toast.text = "Você precisa selecionar um membro do Grupo.";
+          } else if (participantesValor == null) {
+            this.$.toast.text = "Você precisa informar um participante do artigo.";
+          } else if(artigo == null){
+            this.$.toast.text = "Você precisa enviar um artigo no formato PDF.";
+          }
+          this.$.toast.open();
+        }
+      }
+      remover(e) {
+        try {
+          var key = e.currentTarget.note.$key;
+          this.$.query.ref.child(key).remove();
+
+          this.$.toast.text = "Artigo removido.";
+          this.$.toast.open();
+        } catch(err) {
+          this.$.toast.text = "Erro ao remover artigo.";
+          this.$.toast.open();
+        }
+      }
+      update(e) {
+        try {
+          var index = e.currentTarget.note.$key;
+          var toast = this.$.toast;
+
+          var atual = Polymer.dom(this.root).querySelector('[indexInput="atualizar-'+index+'"]').note;
+
+          var nomeValor = Polymer.dom(this.root).querySelector('[indexInput="nome-'+index+'"]').value;
+          var eventoValor = Polymer.dom(this.root).querySelector('[indexInput="evento-'+index+'"]').value;
+          var membroValor = Polymer.dom(this.root).querySelector('[indexInput="membro-'+index+'"]').value;
+          var participantesValor = Polymer.dom(this.root).querySelector('[indexInput="participantes-'+index+'"]').value;
+
+          var artigo = Polymer.dom(this.root).querySelector('[indexInput="artigo-'+index+'"]').inputElement.inputElement.files[0];
+          var reference = this.$.query.ref.child(index);
+
+          if (artigo != null) {
+            var storageRef = firebase.storage().ref();
+            var artigosRef = storageRef.child('Research/artigos/' + artigo.name);
+
+            var uploadTask = artigosRef.put(artigo);
+
+            uploadTask.on('state_changed', function(snapshot) {
+              // Observe state change events such as progress, pause, and resume
+              var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Envio está ' + progress + '% completo.');
+            }, function(error) {
+              console.log(error);
+            }, function() {
+              // Handle successful uploads on complete
+              var downloadURL = uploadTask.snapshot.downloadURL;
+
+              if (nomeValor == null) {
+                this.$.toast.text = "Você precisa informar um nome para o artigo.";
+              } else if (eventoValor == null) {
+                this.$.toast.text = "Você precisa selecionar um evento.";
+              } else if (membroValor == null) {
+                this.$.toast.text = "Você precisa selecionar um membro do Grupo.";
+              } else if (participantesValor == null) {
+                this.$.toast.text = "Você precisa informar um participante do artigo.";
+              } else if(artigo == null){
+                this.$.toast.text = "Você precisa enviar um artigo no formato PDF.";
+              } else {
+                var valor = reference.set({
+                  nome: nomeValor,
+                  evento: eventoValor,
+                  membro: membroValor,
+                  participantes: participantesValor,
+                  artigo: downloadURL
+                });
+              }
+
+              toast.text = "Artigo atualizado com sucesso.";
+              toast.open();
+            });
+          } else {
+            if (nomeValor == null) {
+              this.$.toast.text = "Você precisa informar um nome para o artigo.";
+            } else if (eventoValor == null) {
+              this.$.toast.text = "Você precisa selecionar um evento.";
+            } else if (membroValor == null) {
+              this.$.toast.text = "Você precisa selecionar um membro do Grupo.";
+            } else if (participantesValor == null) {
+              this.$.toast.text = "Você precisa informar um participante do artigo.";
+            } else if(artigo == null){
+              this.$.toast.text = "Você precisa enviar um artigo no formato PDF.";
+            } else {
+              var valor = reference.set({
+                nome: nomeValor,
+                evento: eventoValor,
+                membro: membroValor,
+                participantes: participantesValor,
+                artigo: downloadURL
+              });
+
+              toast.text = "Artigo atualizado com sucesso.";
+              toast.open();
+            }
+          }
+        } catch(err) {
+          this.$.toast.text = "Erro ao atualizar artigo.";
+          this.$.toast.open();
+        }
+      }
+    }
+
+    window.customElements.define(ResearchAdminArtigo.is, ResearchAdminArtigo);
+  </script>
+</dom-module>

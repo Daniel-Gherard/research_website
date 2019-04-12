@@ -1,0 +1,29 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../research-content/home-content.html">
+
+<dom-module id="research-admin-home">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <home-content></home-content>
+  </template>
+
+  <script>
+    class ResearchAdminHome extends Polymer.Element {
+      static get is() { return 'research-admin-home'; }
+      static get properties() {
+        return {
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+        };
+      }
+    }
+
+    window.customElements.define(ResearchAdminHome.is, ResearchAdminHome);
+  </script>
+</dom-module>

@@ -1,0 +1,7 @@
+{
+  "name": "public",
+  "short_name": "public",
+  "description": "Site para Grupos de Pesquisa.",
+  "start_url": "/",
+  "display": "standalone"
+}

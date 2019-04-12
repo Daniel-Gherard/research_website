@@ -1,0 +1,211 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="bower_components/polymerfire/firebase-storage-script.html">
+<link rel="import" href="bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="bower_components/splash-screen/splash-screen.html">
+
+<link rel="import" href="src/research-admin/research-admin.html">
+
+
+<dom-module id="research-auth">
+	<template>
+	<style>
+	:host {
+		display: block;
+	}
+	paper-button {
+		position: absolute;
+		top: 10px;
+		right: 20px;
+	}
+	</style>
+
+	<splash-screen id="splash_screen" align="middle" show="true" background-style="#FFF" destroy="false">
+		<img src="imagens/logo.gif" class="center-aligned" slot="logo" alt=""> 
+		<div slot="content">
+			<paper-spinner active></paper-spinner>
+		</div>
+	</splash-screen>
+
+	<firebase-app
+		auth-domain="fico-ufmg.firebaseapp.com"
+		database-url="https://fico-ufmg.firebaseio.com"
+		api-key="AIzaSyCaGUJIR3R9Ow_FKh9Y1R9iZ_Zw3q-eYuI"
+		storage-bucket="fico-ufmg.appspot.com"
+		messaging-sender-id="522080471550">
+	</firebase-app>
+
+	<firebase-auth
+		id="auth"
+		user="{{user}}"
+		status-known="{{statusKnown}}"
+		signed-in="{{signedIn}}"
+		provider="google">
+	</firebase-auth>
+
+	<firebase-query
+		id="query"
+		path="/research/whitelist"
+		data="{{admin}}"
+		on-error="handleError">
+	</firebase-query> 
+
+	<template is="dom-if" if="[[user]]">
+		<template is="dom-if" if="{{!isAdmin}}">
+			<research-user></research-user>
+		</template>
+
+		<template is="dom-if" if="{{isAdmin}}">
+			<research-admin></research-admin>
+		</template>
+	</template>
+
+	<template is="dom-if" if="[[!user]]">
+		<!--<research-unsigned></research-unsigned>-->
+
+		<paper-button raised on-tap="login" hidden$="[[user]]">Entrar</paper-button>
+	</template>
+	
+	<firebase-query
+		id="usuario"
+		path="/research/users"
+		data="{{users}}"
+		on-error="handleError">
+	</firebase-query>
+
+	<paper-toast id="toast" text=""></paper-toast>
+
+</template>
+
+<script>
+class ResearchAuth extends Polymer.Element {
+	static get is() { return 'research-auth'; }
+
+	static get properties() {
+		return {
+			admin: {
+				type: Array,
+				value: function() {
+					return [];
+				}
+			},
+			isAdmin: {
+				value: false,
+				notify: true
+			},
+			flag: {
+				value: true,
+				notify: true
+			}
+		};
+	}
+
+	static get observers() {
+		return [
+			'adminChanged(admin.splices)'
+		];
+	}
+
+	ready() {
+		super.ready();
+		var s = this.$.splash_screen;
+		Polymer.Async.timeOut.after(2000).run(function() {
+				s.show = false;
+		});
+	}
+
+	adminChanged(changeRecord) {
+		var whitelistRef = this.$.query.ref;
+
+		if (changeRecord) {
+			//Verifica se o usuário está logado:
+			if (this.$.auth.user != null) {
+				var uid = this.$.auth.user.uid;
+				// var adminBoolean = whitelistRef.child(uid).child('admin').value;
+				//
+				// //Exibe o painel de administrador - Caso o usuário seja Administrador:
+				// if (adminBoolean) {
+				// 	flag = false;
+				// 	this.set('isAdmin', true);
+				// }
+
+				changeRecord.indexSplices.forEach(function(s) {
+					for (var i=0; i<s.addedCount; i++) {
+						var index = s.index + i;
+						var user = s.object[index];
+
+						if (user.$key === uid) {
+							//Exibe o painel de administrador - Caso o usuário seja Administrador:
+							if(user.admin) {
+								this.set('flag', false);
+								this.set('isAdmin', true);
+							}
+						}
+					}
+
+					var bandeira = this.flag;
+
+					//Exibe o painel de usuário - Caso o usuário não seja Administrador:
+					if (bandeira) {
+						this.set('isAdmin', false);
+					}
+				}, this);
+			}
+		} else {
+			//Exibe o painel de usuário - Caso a Whitelist não exista no Banco de Dados:
+			this.set('isAdmin', false);
+		}
+	}
+
+	login() {
+		var queryRef = this.$.usuario.ref;
+		var whitelistRef1 = this.$.query.ref;
+		var toast = this.$.toast;
+		var application = this;
+
+		this.$.auth.signInWithPopup().then(function(response) {
+			var user = response.user;
+			console.log(user);
+
+			queryRef.child(user.uid).once('value').then(function(userSnapshot) {
+
+				if( userSnapshot.val() === null ) {
+					queryRef.child(user.uid).set({
+						nome: user.displayName,
+						email: user.email,
+						foto: user.photoURL
+					});
+		    }
+
+				var whitelistRef = whitelistRef1.child(user.uid);
+
+				whitelistRef.once('value').then(function(snapshot) {
+					if (snapshot.val().admin) {
+						application.set('isAdmin', true);
+					}
+				});
+			});
+		}).catch(function(error) {
+			toast.text = "Erro ao fazer o login. Tente novamente.";
+			console.log(error);
+			toast.open();
+		});
+	}
+
+	handleError(e, err) {
+		console.log(e);
+		console.log(err);
+	}
+}
+
+window.customElements.define(ResearchAuth.is, ResearchAuth);
+</script>
+</dom-module>

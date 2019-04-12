@@ -1,0 +1,140 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/iron-image/iron-image.html">
+<link rel="import" href="../../bower_components/l2t-paper-slider/l2t-paper-slider.html">
+
+<dom-module id="home-content">
+	<template is="dom-bind">
+	<style>
+	:host {
+		display: block;
+	}
+	#research_footer_tag {
+		text-align: center;
+		padding: 10px;
+		background-color: #B22222;
+		margin-top: 100px;
+		color: #FFF;
+	}
+
+	#research_footer_tag a {
+		color: #FFF;
+	}
+
+	l2t-paper-slider paper-slide img {
+		width: 100%;
+		max-width: 100%;
+		height: 90%;
+		margin: 20px auto;
+	}
+
+	l2t-paper-slider paper-slide {
+		margin: 0 auto;
+	}
+
+	.styledDots {
+		--paper-slide-width: 300px;
+		--paper-slide-height: 150px;
+		--paper-slide-dot: rgba(120,144,156 ,.8);
+		--paper-slide-dot-selected: rgba(38,50,56 ,1);
+		--paper-slide-dot-styles: {
+		width: 24px;
+		height: 8px;
+		margin: 6px;
+		border-width: 4px;
+		border-style: inset;
+		border-color: #ccc;
+		padding: 2px;
+		box-shadow: inset 0 0 5px 1px rgba(0,0,0,0.6);
+	}
+	</style>
+<!-- 	<paper-spinner active="[[isLoading]]"></paper-spinner>
+</div> -->
+
+<div id="content" class="parallax">
+
+	<firebase-auth
+		id="auth"
+		user="{{user}}">
+	</firebase-auth>
+
+	<l2t-paper-slider>
+		<paper-slide><img src="https://www.fjords.com/wp-content/uploads/2018/12/DSC_6281-2000x1200.jpg"/></paper-slide>
+		<paper-slide><img src="https://www.fjords.com/wp-content/uploads/2018/12/DSC_6281-2000x1200.jpg"/></paper-slide>
+		<paper-slide><img src="https://www.fjords.com/wp-content/uploads/2018/12/DSC_6281-2000x1200.jpg"/></paper-slide>
+		<paper-slide><img src="https://www.fjords.com/wp-content/uploads/2018/12/DSC_6281-2000x1200.jpg"/></paper-slide>
+	</l2t-paper-slider>
+</div>
+
+
+<footer id="research_footer_tag">
+	<p>Powered by
+		<a href="//polymer-project.org">Polymer</a>
+		&
+		<a href="//firebase.google.com/">Firebase</a>.
+		Website Desenvolvido por
+		<a href="//buscatextual.cnpq.br/buscatextual/visualizacv.do?id=K8508897U9">
+			Daniel Gherard
+		</a>
+	</p>
+</footer>
+
+</template>
+
+<script>
+/**
+* @customElement
+* @polymer
+*/
+class HomeContent extends Polymer.Element {
+	static get is() { return 'home-content'; }
+
+	static get properties() {
+		return {
+			information: {
+				type: Array,
+				value: function() {
+					return [];
+				}
+			},
+			isAdmin: {
+				type: Boolean,
+				value: false
+			},
+			isLoading: {
+				value: true,
+				notify: true
+			},
+			anoValue: {
+				value: "",
+				notify: true
+			},
+			descriptionValue: {
+				value: "",
+				notify: true
+			},
+			fundoValue: {
+				value: "",
+				notify: true
+			},
+			logoValue: {
+				value: "",
+				notify: true
+			},
+			logoPlaceValue: {
+				value: "",
+				notify: true
+			},
+		};
+	}
+
+	static get observers() {
+		return [
+			'infoChanged(information.splices)'
+		];
+	}
+}
+
+window.customElements.define(HomeContent.is, HomeContent);
+</script>
+</dom-module>
